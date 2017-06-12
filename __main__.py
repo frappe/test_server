@@ -1,8 +1,12 @@
 from github import Github
-import os, sys 
+import os, sys, time
 import subprocess
 import click
 import json
+
+allowed_domains = ('Manufacturing', 'Education')
+
+# TODO
 
 with open('test_server/config.json', 'r') as f:
 	conf = json.loads(f.read())
@@ -50,6 +54,7 @@ def setup_pull(p, site, app_path):
 	pull(p, app_path)
 	make_site(site)
 	run_demo(site)
+	add_base_ref_flag(site, p.base.ref)
 
 def switch_to_base_branch(branch):
 	for app in ('frappe', 'erpnext'):
@@ -58,6 +63,10 @@ def switch_to_base_branch(branch):
 		except:
 			subprocess.check_output(['git', 'checkout', '-b', branch, 'upstream/{0}'.format(branch)], 
 				cwd=os.path.join('apps', app))
+
+def add_base_ref_flag(site, branch):
+	with open(os.path.join('sites', site, '.baseref'), 'w') as f:
+		f.write(branch)
 
 def update_and_migrate(p, site, app_path):
 	# get the branch
@@ -72,6 +81,7 @@ def update_and_migrate(p, site, app_path):
 
 	pull(p, app_path)
 	subprocess.check_output(['bench', '--site', site, 'migrate'])
+	add_base_ref_flag(site, p.base.ref)
 
 def checkout(p, site, app_path):
 	# get the branch
@@ -108,10 +118,19 @@ def make_site(site):
 	subprocess.check_output(['bench', '--site', site, 'install-app', 
 		'erpnext'], cwd='.')
 
-def run_demo(site):
+def run_demo(site, p):
 	print 'Running demo for 3 days...'
 	try:
-		subprocess.check_output(['bench', '--site', site, 'make-demo', '--days', '3'])
+		domain = 'Manufacturing'
+		if '\ndemo-domain:' in pull.body:
+			_domain = pull.body.split('\ndemo-domain:')[1].split('\n')[0].strip()
+			if _domain in allowed_domains:
+				domain = _domain
+		subprocess.check_output(['bench', '--site', site, 'make-demo', '--days', '3', 
+			'--demo', domain])
+
+		# add a breather for mysql (?)
+		time.sleep(3)
 	except:
 		print 'Unable to run demo'
 
@@ -142,11 +161,14 @@ def drop_site(site, app_path):
 @cli.command()
 @click.option('--site', help='switch to site')
 def use(site):
+	with open(os.path.join('sites', site, '.baseref'), 'r') as f:
+		base_ref = f.read()
+		
 	if site.startswith('f-'):
-		subprocess.check_output(['git', 'checkout', 'develop'], cwd='apps/erpnext')
+		subprocess.check_output(['git', 'checkout', baseref], cwd='apps/erpnext')
 		subprocess.check_output(['git', 'checkout', site], cwd='apps/frappe')
 	else:
-		subprocess.check_output(['git', 'checkout', 'develop'], cwd='apps/frappe')
+		subprocess.check_output(['git', 'checkout', baseref], cwd='apps/frappe')
 		subprocess.check_output(['git', 'checkout', site], cwd='apps/erpnext')
 	subprocess.check_output(['bench', 'restart'])
 
