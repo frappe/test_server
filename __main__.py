@@ -51,17 +51,18 @@ def make_for(app):
 	for p in repo.get_pulls().reversed:
 		site = '{0}-{1}.erpnext.xyz'.format(app[0], p.number)
 		all_sites.append(site)
-		
-		switch_to_base_branch(p.base.ref)
 
-		if os.path.exists(os.path.join('sites', site)):
-			update_and_migrate(p, site, app_path)
-		else:
-			setup_pull(p, site, app_path)
+		if site not in completed_sites:
+			switch_to_base_branch(p.base.ref)
+
+			if os.path.exists(os.path.join('sites', site)):
+				update_and_migrate(p, site, app_path)
+			else:
+				setup_pull(p, site, app_path)
 
 		completed_sites.append(site)
 		with open('.completed_sites', 'w') as f:
-			f.write(json.dumps(site))
+			f.write(json.dumps(completed_sites))
 			
 	delete_closed(app)
 

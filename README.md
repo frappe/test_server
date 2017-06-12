@@ -22,3 +22,8 @@ python test_server make
 python test_server use --site f-2332.erpnext.xyz
 ```
 
+#### Resuming make
+
+If the make function breaks, you might have to manually see why the site is not installing. If you run `make` again it will continue by default from the site that broke. To restart running all sites again, run `python test_server make --restart`
+
+
