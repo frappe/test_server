@@ -5,6 +5,8 @@ import click
 import json
 
 allowed_domains = ('Manufacturing', 'Education')
+all_sites = []
+completed_sites = []
 
 # TODO
 
@@ -18,23 +20,33 @@ def cli():
 
 @cli.command()
 @click.option('--app', help='Make for app, if not specified will make for both frappe and erpnext')
-def make(app=None):
+@click.option('--restart', is_flag=True, default=False, help='Rebuild all sites')
+def make(app=None, restart=False):
+	global completed_sites
+	if restart:
+		if os.path.exists('.completed_sites'):
+			os.remove('.completed_sites')
+	else:
+		if os.path.exists('.completed_sites'):
+			with open('.completed_sites', 'r') as f:
+				completed_sites = json.loads(f.read())
 	if app:
 		make_for(app)
 	else:
 		make_for('frappe')
 		make_for('erpnext')
 
+	os.remove('.completed_sites')
 	restart()
 
 def make_for(app):
+	global all_sites, completed_sites
+
 	repo = g.get_user('frappe').get_repo(app)
 	app_path = os.path.join('apps', app)
 	print 'Fetching {0}...'.format(app)
 
 	subprocess.check_output(['git', 'fetch', 'upstream'], cwd = app_path)
-
-	all_sites = []
 
 	for p in repo.get_pulls().reversed:
 		site = '{0}-{1}.erpnext.xyz'.format(app[0], p.number)
@@ -47,13 +59,17 @@ def make_for(app):
 		else:
 			setup_pull(p, site, app_path)
 
+		completed_sites.append(site)
+		with open('.completed_sites', 'w') as f:
+			f.write(json.dumps(site))
+			
 	delete_closed(app)
 
 def setup_pull(p, site, app_path):
 	checkout(p, site, app_path)
 	pull(p, app_path)
 	make_site(site)
-	run_demo(site)
+	run_demo(site, p)
 	add_base_ref_flag(site, p.base.ref)
 
 def switch_to_base_branch(branch):
@@ -135,6 +151,7 @@ def run_demo(site, p):
 		print 'Unable to run demo'
 
 def delete_closed(app):
+	global all_sites
 	# delete sites for closed PRs
 	print '-' * 20
 	print 'Cleaning up...'
