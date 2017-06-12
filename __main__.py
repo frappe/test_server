@@ -36,7 +36,7 @@ def make(app=None, restart=False):
 		make_for('frappe')
 		make_for('erpnext')
 
-	delete_closed(app)
+	delete_closed()
 	os.remove('.completed_sites')
 	restart()
 
@@ -110,6 +110,17 @@ def checkout(p, site, app_path):
 	subprocess.check_output(['git', 'checkout', '-b', site, 
 		p.base.ref], cwd = app_path)
 
+	# check if this pull depends on another pull
+	pull_body = p.body
+	if 'frappe/frappe#' in pull_body:
+		pull_body.replace('frappe/frappe#', 'https://github.com/frappe/frappe/pull/')
+
+	if app_path.endswith('erpnext') and 'https://github.com/frappe/frappe/pull/' in pull_body \
+		and 'depends' in pull_body.lower():
+		# depends on a particular frappe pull
+		frappe_pull = pull_body.split('https://github.com/frappe/frappe/pull/')[1].split()[0]
+		subprocess.check_output(['git', 'checkout', 'f-{0}.erpnext.xyz'.format(frappe_pull)], 
+			cwd=os.path.join('apps', 'frappe'))
 
 def pull(p, app_path):
 	# pull the patch
@@ -155,15 +166,15 @@ def run_demo(site, p):
 	except:
 		print 'Unable to run demo'
 
-def delete_closed(app):
+def delete_closed():
 	global all_sites
 	# delete sites for closed PRs
 	print '-' * 20
 	print 'Cleaning up...'
 
 	for site in os.listdir('sites'):
-		if (os.path.isdir(os.path.join('sites', site)) 
-			and site.startswith(app[0] + '-') 
+		if site and (os.path.isdir(os.path.join('sites', site)) 
+			and site[1]=='-' and site[0] in ('e', 'f') 
 			and site not in all_sites):
 
 			drop_site(site, os.path.join('apps', app))
@@ -184,7 +195,7 @@ def drop_site(site, app_path):
 @click.option('--site', help='switch to site')
 def use(site):
 	with open(os.path.join('sites', site, '.baseref'), 'r') as f:
-		base_ref = f.read()
+		baseref = f.read()
 		
 	if site.startswith('f-'):
 		subprocess.check_output(['git', 'checkout', baseref], cwd='apps/erpnext')
@@ -196,6 +207,9 @@ def use(site):
 
 @cli.command()
 def restart():
+	_restart()
+
+def _restart():
 	print 'Relading supervisor and nginx'
 	subprocess.check_output(['sudo', 'bench', 'setup', 'supervisor', '--yes'])
 	subprocess.check_output(['sudo', 'bench', 'setup', 'nginx', '--yes'])
