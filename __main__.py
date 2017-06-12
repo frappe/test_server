@@ -36,6 +36,7 @@ def make(app=None, restart=False):
 		make_for('frappe')
 		make_for('erpnext')
 
+	delete_closed(app)
 	os.remove('.completed_sites')
 	restart()
 
@@ -64,8 +65,6 @@ def make_for(app):
 		with open('.completed_sites', 'w') as f:
 			f.write(json.dumps(completed_sites))
 			
-	delete_closed(app)
-
 def setup_pull(p, site, app_path):
 	checkout(p, site, app_path)
 	pull(p, app_path)
@@ -114,6 +113,11 @@ def checkout(p, site, app_path):
 
 def pull(p, app_path):
 	# pull the patch
+	if not p.mergeable:
+		print 'Failed! {0} is not mergeable'.format(p.html_url)
+		print 'Please fix the merge conflict, or close the pull and run "python test_server make" again'
+		sys.exit(1)
+
 	if p.head.repo:
 		subprocess.check_output(['git', 'pull', p.head.repo.html_url + '.git',
 			p.head.ref], cwd = app_path)
