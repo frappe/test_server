@@ -38,7 +38,7 @@ def make(app=None, restart=False):
 
 	delete_closed()
 	os.remove('.completed_sites')
-	restart()
+	_restart()
 
 def make_for(app):
 	global all_sites, completed_sites
@@ -177,7 +177,7 @@ def delete_closed():
 			and site[1]=='-' and site[0] in ('e', 'f') 
 			and site not in all_sites):
 
-			drop_site(site, os.path.join('apps', app))
+			drop_site(site, os.path.join('apps', 'erpnext' if site[0]=='e' else 'frappe'))
 
 def drop_site(site, app_path):
 	print 'Dropping {0}...'.format(site)
@@ -203,6 +203,7 @@ def use(site):
 	else:
 		subprocess.check_output(['git', 'checkout', baseref], cwd='apps/frappe')
 		subprocess.check_output(['git', 'checkout', site], cwd='apps/erpnext')
+	subprocess.check_output(['bench', 'build'])
 	subprocess.check_output(['bench', 'restart'])
 
 @cli.command()
