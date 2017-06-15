@@ -40,7 +40,7 @@ def make_for(app, completed_sites):
 		with open('.completed_sites', 'w') as f:
 			f.write(json.dumps(completed_sites))
 
-		return all_sites
+	return all_sites
 
 def setup_pull(p, site, app_path):
 	checkout(p, site, app_path)
