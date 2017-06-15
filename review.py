@@ -40,12 +40,14 @@ def already_commented(conf, pull, issue):
 		if comment.user.login == conf['user']:
 			my_last_comment_at = comment.updated_at
 
-	commits = pull.get_commits()
-	diff = (parser.parse(commits[0].last_modified)
-		- pytz.utc.localize(my_last_comment_at)).seconds
+			return True
 
-	if my_last_comment_at and diff < 60:
-		return True
+	# commits = pull.get_commits()
+	# diff = (parser.parse(commits[0].last_modified)
+	# 	- pytz.utc.localize(my_last_comment_at)).seconds
+	#
+	# if my_last_comment_at and diff < 60:
+	# 	return True
 
 	return False
 
