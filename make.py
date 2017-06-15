@@ -34,7 +34,7 @@ def make_for(app, completed_sites):
 			else:
 				setup_pull(p, site, app_path)
 
-			pull_review(p)
+			pull_review(p, app)
 
 		completed_sites.append(site)
 		with open('.completed_sites', 'w') as f:
