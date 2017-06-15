@@ -1,7 +1,5 @@
 from utils import get_github, get_conf
 import jinja2, re
-from dateutil import parser
-import pytz
 
 def _review(number=None):
 	if not number:
@@ -26,7 +24,7 @@ def pull_review(pull, app=None):
 		print 'Already commented on {0}'.format(pull.number)
 		return
 
-	props = get_pr_props(pull, app)
+	props = get_pr_props(pull, issue, app)
 
 	env = jinja2.Environment(loader=jinja2.FileSystemLoader(searchpath='test_server'))
 	body = env.get_template('recommendation.md').render(dict(props=props))
@@ -35,10 +33,10 @@ def pull_review(pull, app=None):
 	issue.create_comment(body=body)
 
 def already_commented(conf, pull, issue):
-	my_last_comment_at = False
+#	my_last_comment_at = False
 	for comment in issue.get_comments():
 		if comment.user.login == conf['user']:
-			my_last_comment_at = comment.updated_at
+#			my_last_comment_at = comment.updated_at
 
 			return True
 
@@ -51,8 +49,16 @@ def already_commented(conf, pull, issue):
 
 	return False
 
-def get_pr_props(pull, app):
+def get_pr_props(pull, issue, app):
 	props = {}
+
+	def check_for_images(body):
+		if re.search('https://cloud.githubusercontent.com[^ ]*png', body):
+			props['has_image'] = 1
+
+		if re.search('https://cloud.githubusercontent.com[^ ]*gif', body):
+			props['has_gif'] = 1
+
 
 	code_changes = 0
 
@@ -79,11 +85,12 @@ def get_pr_props(pull, app):
 		if f.filename.endswith('.md') or ('/docs/' in f.filename):
 			props['docs_changed'] = 1
 
-	if re.search('https://cloud.githubusercontent.com[^ ]*png', pull.body):
-		props['has_image'] = 1
+		check_for_images(pull.body)
 
-	if re.search('https://cloud.githubusercontent.com[^ ]*gif', pull.body):
-		props['has_gif'] = 1
+	# check comments for images
+	if not props.get('has_gif') or not props.get('has_image'):
+		for comment in issue.get_comments():
+			check_for_images(comment.body)
 
 	props['code_changes'] = code_changes
 
