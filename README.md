@@ -14,7 +14,7 @@ This utility sets up the test server for testing pull requests on frappe and erp
 
 You can configure pull requests by adding a few commands / keys in the pull request body
 
-- If you want to run a demo for another domain (like Education), add a line in the pull request body whic is like `demo-domain: Education`
+- If you want to run a demo for another domain (like Education), add a line in the pull request body e.g. `demo-domain: Education`
 - If the pull request in ERPNext is dependant on a Frappe PR, add the word "depends" and the url to the frappe pull request
 
 Example:
