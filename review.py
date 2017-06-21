@@ -79,7 +79,8 @@ def get_pr_props(pull, issue, app):
 		if f.filename.endswith('.js'):
 			props['js_changed'] = 1
 			code_changes += f.changes
-			if 'cur_frm' in f.patch or "":
+			patch = f.patch or ""
+			if 'cur_frm' in f.patch:
 				props['has_cur_frm'] = 1
 
 		if f.filename.endswith('.md') or ('/docs/' in f.filename):
