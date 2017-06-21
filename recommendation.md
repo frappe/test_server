@@ -3,7 +3,7 @@
 {% if not props.has_image and not props.has_gif %}
 #### Image or animted GIF Not Added
 
-Please add an image or animated GIF as proof that you have manually tested this contribution. Hint: use [LiceCAP](http://www.cockos.com/licecap/) to capture animated GIFs.
+Please add an image or animated GIF as proof that you have manually tested this contribution. Hint: use [LiceCAP](http://www.cockos.com/licecap/) (Windows and macOS) or [peek](https://github.com/phw/peek) (GNU/Linux) to capture animated GIFs.
 {% endif %}
 {% if props.py_changed and not props.test_py_changed %}
 #### Test Case Not Added / Updated
