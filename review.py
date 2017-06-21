@@ -79,18 +79,18 @@ def get_pr_props(pull, issue, app):
 		if f.filename.endswith('.js'):
 			props['js_changed'] = 1
 			code_changes += f.changes
-			if 'cur_frm' in f.patch:
+			if 'cur_frm' in f.patch or "":
 				props['has_cur_frm'] = 1
 
 		if f.filename.endswith('.md') or ('/docs/' in f.filename):
 			props['docs_changed'] = 1
 
-		check_for_images(pull.body)
+		check_for_images(pull.body or "")
 
 	# check comments for images
 	if not props.get('has_gif') or not props.get('has_image'):
 		for comment in issue.get_comments():
-			check_for_images(comment.body)
+			check_for_images(comment.body or "")
 
 	props['code_changes'] = code_changes
 
