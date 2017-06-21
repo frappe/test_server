@@ -88,7 +88,7 @@ def checkout(p, site, app_path):
 		p.base.ref], cwd = app_path)
 
 	# check if this pull depends on another pull
-	pull_body = p.body
+	pull_body = p.body or ""
 	if 'frappe/frappe#' in pull_body:
 		pull_body.replace('frappe/frappe#', 'https://github.com/frappe/frappe/pull/')
 
